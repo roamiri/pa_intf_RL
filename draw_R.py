@@ -28,10 +28,10 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 g1 = 2.5
 g2 = 1.5
 p1_max = 10
-p2_max = 20
+p2_max = 100
 sigma2 = 1
-beta1 = 0.1
-beta2 = 0.5
+beta1 = 0.2
+beta2 = 0.2
 Gamma = 3.532
 
 
@@ -47,13 +47,13 @@ p1,p2 =np.meshgrid(p1,p2)
 # In[28]:
 
 
-R1 = np.log10(1+(g1*p1)/((g1*p2*beta2+sigma2)*Gamma))
+R1 = np.log2(1+(g1*p1)/((g1*p2*beta2+sigma2)*Gamma))
 
 
 # In[29]:
 
 
-R2 = np.log10(1+(g2*p2)/((g2*p1*beta1+sigma2)*Gamma))
+R2 = np.log2(1+(g2*p2)/((g2*p1*beta1+sigma2)*Gamma))
 
 
 # In[30]:
@@ -67,9 +67,9 @@ R3d_1 = R1+R2
 beta1 = 0.1
 beta2 = 0.1
 
-R3 = np.log10(1+(g1*p1)/((g1*p2*beta2+sigma2)*Gamma))
+R3 = np.log2(1+(g1*p1)/((g1*p2*beta2+sigma2)*Gamma))
 
-R4 = np.log10(1+(g2*p2)/((g2*p1*beta1+sigma2)*Gamma))
+R4 = np.log2(1+(g2*p2)/((g2*p1*beta1+sigma2)*Gamma))
 
 R3d_2 = R3+R4
 
@@ -86,13 +86,13 @@ for y in range(len(p2)):
         colors[x, y] = colortuple[(x + y) % len(colortuple)]
         
 # Plot the surface.
-surf = ax.plot_surface(p1, p2, R3d_1, cmap=cm.coolwarm, linewidth=0, antialiased=False, facecolor=colors)
+surf = ax.plot_surface(p1, p2, R3d_1, cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
 
 #surf = ax.plot_surface(p1, p2, R3d_2, cmap=cm.coolwarm, linewidth=0, antialiased=False, facecolor='blue')
 
 # Customize the z axis.
-ax.set_zlim(-1.01, 1.01)
+#ax.set_zlim(-1.01, 1.01)
 ax.zaxis.set_major_locator(LinearLocator(10))
 ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
