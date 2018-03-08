@@ -5,6 +5,11 @@ from Agent import Agent
 from Rewards import *
 import matplotlib.pyplot as plt
 
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
 
 # Parameters
 Pmin = 0.0
@@ -45,3 +50,91 @@ system_perf = np.zeros((1,Iterations))
 
 #Main loop
 for episode in np.arange(Iterations):
+
+    if (episode / Iterations * 100) < 80:
+        rnd = random.randint(1, 100)
+        if rnd < epsilon:
+            idx = random.randint(0, Npower - 1)
+            PA_1.set_power(actions_1[idx])
+            PA_1.p_index = idx
+            idx = random.randint(0, Npower - 1)
+            PA_2.set_power(actions_2[idx])
+            PA_2.p_index = idx
+        else:
+            # VE algorithm
+            # Pass Q_1 to A_2
+            # construct f_2 and B_2
+            Q_sum = PA_1.Q + PA_2.Q
+            B_2 = np.argmax(Q_sum, axis=1)
+            f_2 = np.amax(Q_sum, axis=1)
+            # pass f_2 to A_1
+            f_1 = max(f_2)
+            a_1 = np.argmax(f_2)
+            # pass a_1 to A_2
+            a_2 = B_2.item(a_1)
+            # end of VE
+
+            # Take action by agents
+            PA_1.p_index = a_1
+            PA_1.set_power(actions_1[a_1])
+            PA_2.p_index = a_2
+            PA_2.set_power(actions_2[a_2])
+    else:
+        # VE algorithm
+        # Pass Q_1 to A_2
+        # construct f_2 and B_2
+        Q_sum = PA_1.Q + PA_2.Q
+        B_2 = np.argmax(Q_sum, axis=1)
+        f_2 = np.amax(Q_sum, axis=1)
+        # pass f_2 to A_1
+        f_1 = max(f_2)
+        a_1 = np.argmax(f_2)
+        # pass a_1 to A_2
+        a_2 = B_2.item(a_1)
+        # end of VE
+
+        # Take action by agents
+        PA_1.p_index = a_1
+        PA_1.set_power(actions_1[a_1])
+        PA_2.p_index = a_2
+        PA_2.set_power(actions_2[a_2])
+
+
+
+    # calc reward
+    #A_1
+    signal = PA_1.power * g1
+    interf = PA_2.power * g1 * beta
+    reward_1 = R_2(signal, interf, 1.0)
+
+    # A_2
+    signal = PA_2.power * g2
+    interf = PA_1.power * g2 * beta
+    reward_2 = R_2(signal, interf, 1.0)
+
+    act1 = PA_1.p_index
+    act2 = PA_2.p_index
+
+    PA_1.Q[act1, act2] = PA_1.Q[act1, act2] + alpha * (reward_1 - PA_1.Q[act1, act2])
+    PA_2.Q[act1, act2] = PA_2.Q[act1, act2] + alpha * (reward_2 - PA_2.Q[act1, act2])
+
+    system_perf[0, episode] = reward_1 + reward_2
+
+print(a_1)
+print(a_2)
+
+fig = plt.figure(1)
+ax = fig.gca(projection='3d')
+
+# Plot the surface.
+Q_total = PA_1.Q + PA_2.Q
+X, Y = np.meshgrid(actions_2, actions_1)
+surf_1 = ax.plot_surface(X, Y, Q_total, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+ax.zaxis.set_major_locator(LinearLocator(10))
+ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+
+# Add a color bar which maps values to colors.
+# fig.colorbar(surf, shrink=0.5, aspect=5)
+# plt.matshow(Q_joint)
+plt.show()
+
