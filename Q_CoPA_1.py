@@ -32,29 +32,29 @@ g2 = 1.5
 Gamma = 3.532
 sigma2 = 1
 # beta = 0.1
-optimal = np.log2(1 + ((Pmax_1*g1)/((Pmax_2*g1*beta+1)*Gamma)))+np.log2(1+(Pmax_2*g2)/((Pmax_1*g2*beta+1)*Gamma))
-optimal_1 = np.log2(1+(Pmax_1*g1)/((1)*Gamma))
-optimal_2 = np.log2(1+(Pmax_2*g2)/((1)*Gamma))
 
-actions_1 = np.linspace(Pmin, Pmax_1, Npower)
-actions_2 = np.linspace(Pmin, Pmax_2, Npower)
-states = np.array([0])
-
-agents = []
-PA_1 = Agent(actions_1.size, actions_2.size)
-PA_2 = Agent(actions_1.size, actions_2.size)
-agents.append(PA_1)
-agents.append(PA_2)
-
-#Q-learning
-Iterations = 50*(actions_1.size*actions_2.size)
-system_perf = np.zeros((1,Iterations))
+qcopa_perf = np.zeros(10)
+optimum_perf = np.zeros(10)
+greedy_perf = np.zeros(10)
+simultaneous_perf = np.zeros(10)
 
 #Main loop
 cnt = 0;
 for bb in tqdm(np.linspace(0,1,10)):
 
     beta = bb
+    actions_1 = np.linspace(Pmin, Pmax_1, Npower)
+    actions_2 = np.linspace(Pmin, Pmax_2, Npower)
+    states = np.array([0])
+
+    agents = []
+    PA_1 = Agent(actions_1.size, actions_2.size)
+    PA_2 = Agent(actions_1.size, actions_2.size)
+    agents.append(PA_1)
+    agents.append(PA_2)
+
+    # Q-learning
+    Iterations = 50 * (actions_1.size * actions_2.size)
 
     for episode in np.arange(Iterations):
 
@@ -136,44 +136,41 @@ for bb in tqdm(np.linspace(0,1,10)):
     signal = PA_2.power * g2
     interf = PA_1.power * g2 * beta
     reward_2 = R_2(signal, interf, 1.0)
-    system_perf[0, cnt] = reward_1 + reward_2
+    qcopa_perf[cnt] = reward_1 + reward_2
+
+    val_simul = np.log2(1 + ((Pmax_1 * g1) / (Pmax_2 * g1 * beta + 1))) + np.log2(1 + (Pmax_2 * g2) / (Pmax_1 * g2 * beta + 1))
+    val_0 = np.log2(1 + (Pmax_1 * g1) / ((1) ))
+    val_greedy = np.log2(1 + (Pmax_2 * g2) / ((1)))
+    val_optimum = max(val_0, val_greedy, val_simul)
+
+    optimum_perf[cnt] = val_optimum
+    greedy_perf[cnt] = val_greedy
+    simultaneous_perf[cnt] = val_simul
     cnt = cnt+1
 
-act1 = PA_1.p_index
-act2 = PA_2.p_index
-print(act1)
-print(PA_1.power)
-print(act2)
-print(PA_2.power)
+t = np.linspace(0,1,10)
 
-fig = plt.figure(1)
-ax = fig.gca(projection='3d')
+# red dashes, blue squares and green triangles
+# plt.plot(t, qcopa_perf, 'r--', t, optimum_perf, 'bs', t, greedy_perf, 'g^', t, simultaneous_perf, 'k*')
 
-# Plot the surface.
-font = {'family': 'serif',
-        'color':  'black',
-        'weight': 'bold',
-        'size': 20,
-        }
+fig = plt.figure()
+l_qcopa, l_opt, l_greedy, l_simul = plt.plot(t, qcopa_perf, t, optimum_perf, t, greedy_perf, t, simultaneous_perf)
+# lines = plt.plot(t, qcopa_perf, t, optimum_perf, t, greedy_perf, t, simultaneous_perf)
+# or MATLAB style string value pairs
+plt.setp(l_qcopa, 'ls', '--' ,'marker', '*', 'color', 'r', 'LineWidth',1,'MarkerSize',15, 'label' , 'Q-CoPA')
+plt.setp(l_opt, 'ls', '--','color','k', 'LineWidth',3,'MarkerSize',10, 'label' , 'Optimum')
+plt.setp(l_greedy, 'ls', '--', 'marker', 'o', 'color', 'g', 'LineWidth',1,'MarkerSize',5, 'label' , 'Greedy')
+plt.setp(l_simul, 'ls', '--', 'marker', 's', 'color', 'b', 'LineWidth',1,'MarkerSize',10, 'label' , 'Simultaneous')
 
-Q_total = PA_1.Q + PA_2.Q
-X, Y = np.meshgrid(actions_2, actions_1)
-surf_1 = ax.plot_surface(X, Y, Q_total, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-ax.zaxis.set_major_locator(LinearLocator(10))
-ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-ax.spines['bottom'].set_color('0.5')
-ax.spines['top'].set_color('0.5')
-ax.spines['right'].set_color('0.5')
-ax.spines['left'].set_color('0.5')
-
-# plt.title('Global action-value function', fontdict=font)
-# plt.text(PA_1.power, PA_2.power, '$\max_{P_1,P2} Q$', fontdict=font)
-plt.xlabel('$P_2$', fontdict=font)
-plt.ylabel('$P_1$', fontdict=font)
-
-# Add a color bar which maps values to colors.
-fig.colorbar(surf_1, shrink=0.5, aspect=10)
-# plt.savefig('Q_1.eps', format='eps', dpi=1000)
+plt.xlabel('Portion of Interference' r'($\beta$)',fontsize=20)
+plt.ylabel('Normalized throughput($bps/Hz$)',fontsize=20)
+plt.title('Normalized throughput versus $beta$.',fontsize=20)
+# plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
+# plt.axis([40, 160, 0, 0.03])
+plt.grid(True)
+plt.legend()
 plt.show()
+
+fig.savefig('compare.jpg')
 
 
