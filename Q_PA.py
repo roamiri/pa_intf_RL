@@ -41,8 +41,8 @@ actions_2 = np.linspace(Pmin, Pmax_2, Npower)
 states = np.array([0])
 
 agents = []
-PA_1 = Agent(actions_1.size, actions_2.size)
-PA_2 = Agent(actions_1.size, actions_2.size)
+PA_1 = Agent(states.size, actions_1.size)
+PA_2 = Agent(states.size, actions_2.size)
 agents.append(PA_1)
 agents.append(PA_2)
 
@@ -50,86 +50,61 @@ agents.append(PA_2)
 Iterations = 50*(actions_1.size*actions_2.size)
 system_perf = np.zeros((1,Iterations))
 
-#Main loop
-
 for episode in tqdm(np.arange(Iterations)):
 
-    if (episode / Iterations * 100) < 80:
-        rnd = random.randint(1, 100)
-        if rnd < epsilon:
-            idx = random.randint(0, Npower - 1)
-            PA_1.set_power(actions_1[idx])
-            PA_1.p_index = idx
-            idx = random.randint(0, Npower - 1)
-            PA_2.set_power(actions_2[idx])
-            PA_2.p_index = idx
+    # Choosing action
+    sumQ = np.zeros((states.size, actions_1.size))
+    for i in [0, 1]:
+        PA = agents[i]
+        sumQ += PA.Q
+
+    powers = np.zeros(2)
+
+    for i in [0, 1]:
+        PA = agents[i]
+        if i==0:
+            actions = actions_1
         else:
-            # VE algorithm
-            # Pass Q_1 to A_2
-            # construct f_2 and B_2
-            Q_sum = PA_1.Q + PA_2.Q
-            B_2 = np.argmax(Q_sum, axis=1)
-            f_2 = np.amax(Q_sum, axis=1)
-            # pass f_2 to A_1
-            f_1 = max(f_2)
-            a_1 = np.argmax(f_2)
-            # pass a_1 to A_2
-            a_2 = B_2.item(a_1)
-            # end of VE
+            actions = actions_2
+        if (episode/Iterations*100) < 80:
+            rnd = random.randint(1,100)
+            if rnd< epsilon:
+                idx = random.randint(0,Npower-1)
+                PA.set_power(actions[idx])
+                PA.p_index = idx
+            else:
+                max_indice = np.argmax(sumQ, axis = 1)
+                idx = max_indice[PA.s_index]
+                PA.p_index = idx
+                PA.set_power(actions[idx])
+        else:
+            max_indice = np.argmax(sumQ, axis=1)
+            idx = max_indice[PA.s_index]
+            PA.p_index = idx
+            PA.set_power(actions[idx])
+        powers[i] = PA.power
+        agents[i] = PA
 
-            # Take action by agents
-            PA_1.p_index = a_1
-            PA_1.set_power(actions_1[a_1])
-            PA_2.p_index = a_2
-            PA_2.set_power(actions_2[a_2])
-    else:
-        # VE algorithm
-        # Pass Q_1 to A_2
-        # construct f_2 and B_2
-        Q_sum = PA_1.Q + PA_2.Q
-        mm = np.max(Q_sum)
-        B_2 = np.argmax(Q_sum, axis=1)
-        f_2 = np.amax(Q_sum, axis=1)
-        # pass f_2 to A_1
-        f_1 = max(f_2)
-        a_1 = np.argmax(f_2)
-        # pass a_1 to A_2
-        a_2 = B_2.item(a_1)
-        # end of VE
-
-        # Take action by agents
-        PA_1.p_index = a_1
-        PA_1.set_power(actions_1[a_1])
-        PA_2.p_index = a_2
-        PA_2.set_power(actions_2[a_2])
-
-
-
-    # calc reward
-    #A_1
-    signal = PA_1.power * g1
-    interf = PA_2.power * g1 * beta
+    # Calculate the Reward
+    # Agent1
+    signal = powers[0]*g1
+    interf = powers[1]*g1*beta
     reward_1 = R_2(signal, interf, 1.0)
+    PA = agents[0]
+    act = PA.p_index
+    st = PA.s_index
+    PA.Q[st, act] = PA.Q[st, act] + alpha * (reward_1 - PA.Q[st, act])
 
-    # A_2
-    signal = PA_2.power * g2
-    interf = PA_1.power * g2 * beta
+    # Agent2
+    signal = powers[1] * g2
+    interf = powers[0] * g2 * beta
     reward_2 = R_2(signal, interf, 1.0)
+    PA = agents[1]
+    act = PA.p_index
+    st = PA.s_index
+    PA.Q[st, act] = PA.Q[st, act] + alpha * (reward_2 - PA.Q[st, act])
 
-    act1 = PA_1.p_index
-    act2 = PA_2.p_index
-
-    PA_1.Q[act1, act2] = PA_1.Q[act1, act2] + alpha * (reward_1 - PA_1.Q[act1, act2])
-    PA_2.Q[act1, act2] = PA_2.Q[act1, act2] + alpha * (reward_2 - PA_2.Q[act1, act2])
-
-    system_perf[0, episode] = reward_1 + reward_2
-
-act1 = PA_1.p_index
-act2 = PA_2.p_index
-print(act1)
-print(PA_1.power)
-print(act2)
-print(PA_2.power)
+    system_perf[0,episode] = reward_1 + reward_2
 
 fig = plt.figure(1)
 ax = fig.gca(projection='3d')
@@ -161,5 +136,3 @@ plt.ylabel('$P_1$(mW)', fontdict=font)
 fig.colorbar(surf_1, shrink=0.5, aspect=10)
 # plt.savefig('Q_1.eps', format='eps', dpi=1000)
 plt.show()
-
-

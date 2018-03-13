@@ -54,7 +54,7 @@ for bb in tqdm(np.linspace(0,1,10)):
     agents.append(PA_2)
 
     # Q-learning
-    Iterations = 50 * (actions_1.size * actions_2.size)
+    Iterations = 30 * (actions_1.size * actions_2.size)
 
     for episode in np.arange(Iterations):
 
@@ -164,7 +164,7 @@ plt.setp(l_simul, 'ls', '--', 'marker', 's', 'color', 'b', 'LineWidth',1,'Marker
 
 plt.xlabel('Portion of Interference' r'($\beta$)',fontsize=20)
 plt.ylabel('Normalized throughput($bps/Hz$)',fontsize=20)
-plt.title('Normalized throughput versus $beta$.',fontsize=20)
+# plt.title('Normalized throughput versus $beta$.',fontsize=20)
 # plt.text(60, .025, r'$\mu=100,\ \sigma=15$')
 # plt.axis([40, 160, 0, 0.03])
 plt.grid(True)
