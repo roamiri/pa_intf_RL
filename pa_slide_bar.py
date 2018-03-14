@@ -90,7 +90,25 @@ Z = throughput(0.0)
 surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
 ax.zaxis.set_major_locator(LinearLocator(10))
 ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-fig.colorbar(surf, shrink=0.5, aspect=5)
+# fig.colorbar(surf, shrink=0.5, aspect=5)
+
+font = {'family': 'serif',
+        'color':  'black',
+        'weight': 'bold',
+        'size': 20,
+        }
+
+ax.spines['bottom'].set_color('0.5')
+ax.spines['top'].set_color('0.5')
+ax.spines['right'].set_color('0.5')
+ax.spines['left'].set_color('0.5')
+
+# plt.title('Global action-value function', fontdict=font)
+# plt.text(PA_1.power, PA_2.power, '$\max_{P_1,P2} Q$', fontdict=font)
+plt.xlabel('$P_2$(mW)', fontdict=font)
+plt.ylabel('$P_1$(mW)', fontdict=font)
+ax.set_zlabel('Throughtput(b/s/Hz)', fontdict=font)
+
 
 axcolor = 'lightgoldenrodyellow'
 ax_slider = plt.axes([0.25, 0.1, 0.65, 0.03], axisbg=axcolor)
@@ -100,17 +118,19 @@ def update_R(val):
     Z = throughput(val)
     ax.clear()
     surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.spines['bottom'].set_color('0.5')
+    ax.spines['top'].set_color('0.5')
+    ax.spines['right'].set_color('0.5')
+    ax.spines['left'].set_color('0.5')
+
+    # plt.title('Global action-value function', fontdict=font)
+    # plt.text(PA_1.power, PA_2.power, '$\max_{P_1,P2} Q$', fontdict=font)
+    ax.set_xlabel('$P_2$(mW)', fontdict=font)
+    ax.set_ylabel('$P_1$(mW)', fontdict=font)
+    ax.set_zlabel('Throughtput(b/s/Hz)', fontdict=font)
 
 slider_beta.on_changed(update_R)
 
+
 plt.show()
-
-#Bind sliding bar and reset button
-# stime.on_changed(update)
-
-# resetax = plt.axes([0.8, 0.025, 0.1, 0.04])
-# button = Button(resetax, 'Reset', color=axcolor, hovercolor='0.975')
-# button.on_clicked(reset)
-
-# plt.show()
 
