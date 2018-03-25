@@ -31,7 +31,7 @@ g1 = 2.5
 g2 = 1.5
 Gamma = 3.532
 sigma2 = 1
-beta = 0.1
+beta = 0.3
 optimal = np.log2(1 + ((Pmax_1*g1)/((Pmax_2*g1*beta+1)*Gamma)))+np.log2(1+(Pmax_2*g2)/((Pmax_1*g2*beta+1)*Gamma))
 optimal_1 = np.log2(1+(Pmax_1*g1)/((1)*Gamma))
 optimal_2 = np.log2(1+(Pmax_2*g2)/((1)*Gamma))
@@ -153,9 +153,9 @@ ax.spines['left'].set_color('0.5')
 
 # plt.title('Global action-value function', fontdict=font)
 # plt.text(PA_1.power, PA_2.power, '$\max_{P_1,P2} Q$', fontdict=font)
-plt.xlabel('$P_2$(mW)', fontdict=font)
-plt.ylabel('$P_1$(mW)', fontdict=font)
-#plt.zlabel('$Q(P_1,P_2)$', fontdict=font)
+plt.xlabel('$\mathbf{P_2}$(mW)', fontdict=font)
+plt.ylabel('$\mathbf{P_1}$(mW)', fontdict=font)
+ax.set_zlabel('$\mathbf{Q}(P_1,P_2)$', fontdict=font)
 
 # Add a color bar which maps values to colors.
 fig.colorbar(surf_1, shrink=0.5, aspect=10)
